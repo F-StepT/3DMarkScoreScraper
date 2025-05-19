@@ -10,7 +10,7 @@ from concurrent.futures import (
 from tqdm import tqdm, trange
 
 
-from Helper.File import ChoseAFileToSave, ChoseFilesToOpen
+from Helper.File import ChoseFilesToOpen
 from Helper.ProcessDeviceName import CPUName, GPUName
 from Helper.Get3DMarkScore import GetNameFromId, GetMedianScoreFromId, TESTSCENE
 
@@ -150,10 +150,14 @@ def ProcessData(Data: DATA_TYPE, IsCpu: bool) -> None:
     Df.sort_values(COL_SCORE, ascending=False, inplace=True)
     Df.reset_index(drop=True, inplace=True)
 
-    # 将dataframe写入excel
-    with pd.ExcelWriter(ChoseAFileToSave(), engine="openpyxl") as w:
+    # 直接保存到根目录下
+    root_dir = os.path.dirname(os.path.abspath(__file__))
+    filename = "CPU_Result.xlsx" if IsCpu else "GPU_Result.xlsx"
+    save_path = os.path.join(root_dir, filename)
+    with pd.ExcelWriter(save_path, engine="openpyxl") as w:
         Df.to_excel(w, sheet_name="Sheet1", index=False)
 
+    print(f"结果已保存至: {save_path}")
     print(Df)
 
 
@@ -187,12 +191,13 @@ def Main() -> None:
         Data = GetAllDeviceInfo(IsCpu)
         print(f"\nTotal time:{time.time() - StartTime:.2f}s")
 
-        SavePath = ChoseAFileToSave(
-            FileTypes=[("Json File", ".json")], DefaultExtension=".json", bForce=False
-        )
-        if SavePath:
-            with open(SavePath, "w", encoding="utf-8") as File:
-                json.dump(Data, File)
+        # 直接保存到根目录下
+        root_dir = os.path.dirname(os.path.abspath(__file__))
+        filename = "CPU_Result.json" if IsCpu else "GPU_Result.json"
+        save_path = os.path.join(root_dir, filename)
+        with open(save_path, "w", encoding="utf-8") as File:
+            json.dump(Data, File)
+        print(f"原始数据已保存至: {save_path}")
 
     elif Mode == MODES_TO_CHOOSE[1]:
         # 将多个文件读入
@@ -223,3 +228,4 @@ def Main() -> None:
 
 if __name__ == "__main__":
     Main()
+
